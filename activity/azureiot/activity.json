@@ -1,0 +1,23 @@
+{
+  "name": "azureiot",
+  "version": "0.0.1",
+  "type": "flogo:activity",
+  "description": "activity description",
+  "author": "Pradyumna Chakicherla <pradyumna.chakicherla@isteer.com>",
+  "inputs":[
+    {
+      "name": "deviceID",
+      "type": "string"
+    },
+    {
+      "name": "hostName",
+      "type": "string"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "string"
+    }
+  ]
+}
