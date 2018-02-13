@@ -3,10 +3,18 @@
   "version": "0.0.1",
   "type": "flogo:activity",
   "description": "activity description",
-  "author": "Your Name <you.name@example.org>",
+  "author": "Pradyumna Chakicherla <pradyumna.chakicherla@isteer.com>",
   "inputs":[
     {
-      "name": "input",
+      "name": "sharedAccessKey",
+      "type": "string"
+    },
+    {
+      "name": "hostName",
+      "type": "string"
+    },
+    {
+      "name": "deviceID",
       "type": "string"
     }
   ],
