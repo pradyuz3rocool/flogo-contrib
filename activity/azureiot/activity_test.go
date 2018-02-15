@@ -6,11 +6,9 @@ import (
 
 	"github.com/TIBCOSoftware/flogo-contrib/action/flow/test"
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
-	"github.com/TIBCOSoftware/flogo-lib/logger"
 )
 
 var activityMetadata *activity.Metadata
-var log = logger.GetLogger("activit-azureiot")
 
 func getActivityMetadata() *activity.Metadata {
 
@@ -55,7 +53,6 @@ func TestEval(t *testing.T) {
 	tc.SetInput("hostName", "myhub.azure-devices.net")
 	tc.SetInput("deviceID", "raspi-isteer")
 
-	log.GetLogger(tc)
 	act.Eval(tc)
 
 	//check result attr
