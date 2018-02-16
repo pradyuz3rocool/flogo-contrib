@@ -34,7 +34,7 @@ func (a *MyActivity) Eval(context activity.Context) (done bool, err error) {
 	log.Debug("The device is [%s]", deviceID)
 	log.Debug("The shared access key is [%s]", sharedAccessKey)
 
-	context.SetOutput("result", "Trying to conenct to device "+deviceID+" using hostname: "+hostName+"and sharedAccesskey as "+sharedAccessKey)
+	context.SetOutput("result", "Trying to connect to device "+deviceID+" using hostname: "+hostName+"and sharedAccesskey as "+sharedAccessKey)
 
 	return true, nil
 }
