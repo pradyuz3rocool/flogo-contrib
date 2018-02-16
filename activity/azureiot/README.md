@@ -15,22 +15,25 @@ Inputs and Outputs:
 {
   "inputs":[
     {
-      "name": "thingName",
+      "name": "sharedAccessKey",
       "type": "string",
       "required": true
     },
     {
-      "name": "awsEndpoint",
+      "name": "hostName",
       "type": "string",
       "required": true
     },
     {
-      "name": "desired",
-      "type": "params"
-    },
+      "name": "deviceID",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "outputs": [
     {
-      "name": "reported",
-      "type": "params"
+      "name": "result",
+      "type": "string"
     }
   ]
 }
