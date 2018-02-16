@@ -100,9 +100,8 @@ func (b *SimpleTaskBehavior) Eval(context model.TaskContext, evalCode int) (eval
 
 		//for now enter all children (bpel style) - costly
 		context.EnterChildren(nil)
-		evalResult = model.EVAL_WAIT
 
-		return evalResult, 0, nil
+		return model.EVAL_WAIT, 0, nil
 	}
 
 	if context.HasActivity() {
