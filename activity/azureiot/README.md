@@ -1,11 +1,11 @@
 # tibco-azureiot
-This activity provides your flogo application the ability to update a device shadow on Aws.
+This activity provides your flogo application the ability to update a device shadow on Azure IOT hub.
 
 
 ## Installation
 
 ```bash
-flogo add activity github.com/TIBCOSoftware/flogo-contrib/activity/awsiot
+flogo add activity github.com/TIBCOSoftware/flogo-contrib/activity/azureiot
 ```
 
 ## Schema
@@ -42,7 +42,7 @@ Inputs and Outputs:
 | Setting     | Description    |
 |:------------|:---------------|
 | thingName   | The name of the "thing" in Aws IoT |         
-| awsEndpoint | The Aws Iot Endpoint for the account  |
+| hostname    | The Aws Iot Endpoint for the account  |
 | desired     | The desired state to update |
 | reported    | The reported state to update |
 
