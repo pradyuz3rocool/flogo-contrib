@@ -59,6 +59,7 @@ _testmain.go
 
 tags
 .vscode/symbols.json
+.vscode/launch.json
 .build-cache
 submodules/flogo-cicd/.build-cache
 ./Dockerfile

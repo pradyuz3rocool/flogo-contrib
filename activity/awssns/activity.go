@@ -2,6 +2,7 @@ package awssns
 
 import (
 	"fmt"
+
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
 	"github.com/aws/aws-sdk-go/aws"
@@ -23,7 +24,7 @@ const (
 )
 
 // log is the default package logger
-var log = logger.GetLogger("activity-tibco-configreader")
+var log = logger.GetLogger("activity-tibco-awssns")
 
 // AWSSNS Structure for the AWSNS activity
 type AWSSNS struct {
@@ -54,14 +55,7 @@ func (a *AWSSNS) Eval(context activity.Context) (done bool, err error) {
 	SMSFrom := context.GetInput(ConfSMSFrom).(string)
 	SMSTo := context.GetInput(ConfSMSTo).(string)
 	SMSMessage := context.GetInput(ConfSMSMessage).(string)
-	var SMSType string
-
-	if context.GetInput(ConfSMSType) == nil {
-		log.Info("SMS Type not set. Using default value 'Promotional'")
-		SMSType = "Promotional"
-	} else {
-		SMSType = context.GetInput(ConfSMSType).(string)
-	}
+	SMSType := context.GetInput(ConfSMSType).(string)
 
 	log.Debug("Setting credentials")
 	var snsCreds = credentials.NewStaticCredentials(AWSAccessKeyID, AWSSecretAccessKey, "")
