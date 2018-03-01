@@ -2,7 +2,7 @@
   "name": "azureiot",
   "version": "0.0.1",
   "type": "flogo:activity",
-  "ref": "github.com/pradyuz3rocool/flogo-contrib/activity/azureiot",  
+  "ref": "github.com/pradyuz3rocool/flogo-contrib/tree/master/activity/azureiot",  
   "description": "Simple Azure IOT",
   "homepage": "https://github.com/pradyuz3rocool/flogo-contrib/tree/master/activity/azureiot",
   "author": "Pradyumna Chakicherla <pradyumna.chakicherla@isteer.com>",
