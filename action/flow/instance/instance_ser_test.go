@@ -30,13 +30,27 @@ const defJSON = `
       "tasks": [
         {
           "id": 2,
-          "activityRef": "test-counter",
-          "name": "a"
+          "activityRef": "test-log",
+          "name": "a",
+          "attributes": [
+            {
+              "name": "message",
+              "value": "test message",
+              "type": "string"
+            }
+          ]
         },
         {
           "id": 3,
-          "activityRef": "test-log",
-          "name": "b"
+          "activityRef": "test-counter",
+          "name": "b",
+          "attributes": [
+            {
+              "name": "counterName",
+              "value": "test_counter",
+              "type": "string"
+            }
+          ]
         }
       ],
       "links": [
@@ -57,7 +71,7 @@ func TestFullSerialization(t *testing.T) {
 	def, _ := definition.NewDefinition(defRep)
 	assert.NotNil(t, def)
 
-	instance := NewIndependentInstance("12345", def)
+	instance := NewIndependentInstance("12345", "uri", def)
 
 	instance.Start(nil)
 
@@ -68,6 +82,32 @@ func TestFullSerialization(t *testing.T) {
 
 		json, _ := json.Marshal(instance)
 		logger.Debugf("Snapshot: %s\n", string(json))
+	}
+
+}
+
+func TestChangeSerialization(t *testing.T) {
+
+	defRep := &definition.DefinitionRep{}
+	err := json.Unmarshal([]byte(defJSON), defRep)
+	assert.Nil(t, err)
+
+	logger.Infof("Def Rep: %v", defRep)
+
+	def, _ := definition.NewDefinition(defRep)
+	assert.NotNil(t, def)
+
+	instance := NewIndependentInstance("12345", "uri", def)
+
+	instance.Start(nil)
+
+	hasWork := true
+
+	for hasWork && instance.Status() < model.FlowStatusCompleted {
+		hasWork = instance.DoStep()
+
+		json, _ := json.Marshal(instance.ChangeTracker)
+		logger.Debugf("Change: %s\n", string(json))
 	}
 }
 

@@ -12,7 +12,7 @@ Settings, Outputs and Endpoint:
 
 ```json
 {
-  "outputs": [
+  "output": [
     {
       "name": "args",
       "type": "array"
@@ -26,7 +26,7 @@ Settings, Outputs and Endpoint:
       },
       {
         "name": "default",
-        "type": "bool"
+        "type": "boolean"
       }
     ]
   }
