@@ -1,8 +1,15 @@
-# tibco-reply
-This activity provides your flogo application the ability to reply to a trigger invocation.
+---
+title: Reply (Legacy)
+weight: 4617
+---
+
+# Reply (Legacy)
+This activity has been deprecated and will be removed in a future release. Please use [actreply](../actreply) or [actreturn](../actreturn)
 
 ## Installation
-
+### Flogo Web
+This activity comes out of the box with the Flogo Web UI
+### Flogo CLI
 ```bash
 flogo add activity github.com/TIBCOSoftware/flogo-contrib/activity/reply
 ```
@@ -28,14 +35,13 @@ Inputs and Outputs:
 }
 ```
 ## Settings
-| Setting     | Description    |
-|:------------|:---------------|
-| code        | The response code |         
-| data        | The response data |
+| Setting     | Required | Description |
+|:------------|:---------|:------------|
+| code        | True     | The response code to send back to the trigger |         
+| data        | False    | The response data to send back to the trigger |
 
-## Configuration Examples
-### Simple
-Configure a activity to respond with a simple http success code.
+## Examples
+The below example responds with an HTTP success code.
 
 ```json
 {
