@@ -116,7 +116,7 @@ func NewDefinition(rep *DefinitionRep) (def *Definition, err error) {
 
 		for id, linkRep := range rep.Links {
 
-			link, err := createLink(def, linkRep, id)
+			link, err := createLink(def.tasks, linkRep, id)
 			if err != nil {
 				return nil, err
 			}
@@ -147,9 +147,11 @@ func NewDefinition(rep *DefinitionRep) (def *Definition, err error) {
 
 		if len(rep.ErrorHandler.Links) != 0 {
 
+			idOffset := len(rep.Links)
+
 			for id, linkRep := range rep.ErrorHandler.Links {
 
-				link, err := createLink(def, linkRep, id)
+				link, err := createLink(errorHandler.tasks, linkRep, id+idOffset)
 				if err != nil {
 					return nil, err
 				}
@@ -218,18 +220,6 @@ func createActivityConfig(task *Task, rep *ActivityConfigRep) (*ActivityConfig, 
 	//todo need to fix this
 	task.activityCfg = activityCfg
 
-	// create mappers
-	if rep.Mappings != nil {
-		if rep.Mappings.Input != nil {
-			activityCfg.inputMapper = GetMapperFactory().NewActivityInputMapper(task, &data.MapperDef{Mappings: rep.Mappings.Input})
-		}
-		if rep.Mappings.Output != nil {
-			activityCfg.outputMapper = GetMapperFactory().NewActivityOutputMapper(task, &data.MapperDef{Mappings: rep.Mappings.Output})
-		} else {
-			activityCfg.outputMapper = GetMapperFactory().GetDefaultActivityOutputMapper(task)
-		}
-	}
-
 	if len(rep.Settings) > 0 {
 		activityCfg.settings = make(map[string]*data.Attribute, len(rep.Settings))
 
@@ -280,6 +270,23 @@ func createActivityConfig(task *Task, rep *ActivityConfigRep) (*ActivityConfig, 
 		}
 	}
 
+	// create mappers
+	if rep.Mappings != nil {
+		if rep.Mappings.Input != nil {
+			activityCfg.inputMapper = GetMapperFactory().NewActivityInputMapper(task, &data.MapperDef{Mappings: rep.Mappings.Input})
+		}
+		if rep.Mappings.Output != nil {
+			activityCfg.outputMapper = GetMapperFactory().NewActivityOutputMapper(task, &data.MapperDef{Mappings: rep.Mappings.Output})
+		} else {
+			activityCfg.outputMapper = GetMapperFactory().GetDefaultActivityOutputMapper(task)
+		}
+	}
+
+	//If outmapper still empty set to default
+	if activityCfg.outputMapper == nil {
+		activityCfg.outputMapper = GetMapperFactory().GetDefaultActivityOutputMapper(task)
+	}
+
 	return activityCfg, nil
 }
 
@@ -290,7 +297,7 @@ func resolveSettingValue(setting string, value interface{}) interface{} {
 	if ok && len(strVal) > 0 && strVal[0] == '$' {
 		v, err := data.GetBasicResolver().Resolve(strVal, nil)
 
-		if err != nil {
+		if err == nil {
 
 			logger.Debugf("Resolved setting [%s: %s] to : %v", setting, value, v)
 			return v
@@ -300,28 +307,30 @@ func resolveSettingValue(setting string, value interface{}) interface{} {
 	return value
 }
 
-func createLink(def *Definition, linkRep *LinkRep, id int) (*Link, error) {
+func createLink(tasks map[string]*Task, linkRep *LinkRep, id int) (*Link, error) {
 
 	link := &Link{}
 	link.id = id
 	link.linkType = LtDependency
 
-	switch linkRep.Type {
-	case "default", "dependency", "0":
-		link.linkType = LtDependency
-	case "expression", "1":
-		link.linkType = LtExpression
-	case "label", "2":
-		link.linkType = LtLabel
-	case "error", "3":
-		link.linkType = LtError
-	default:
-		logger.Warnf("Unsupported link type '%s', using default link")
+	if len(linkRep.Type) > 0 {
+		switch linkRep.Type {
+		case "default", "dependency", "0":
+			link.linkType = LtDependency
+		case "expression", "1":
+			link.linkType = LtExpression
+		case "label", "2":
+			link.linkType = LtLabel
+		case "error", "3":
+			link.linkType = LtError
+		default:
+			logger.Warnf("Unsupported link type '%s', using default link")
+		}
 	}
 
 	link.value = linkRep.Value
-	link.fromTask = def.tasks[linkRep.FromID]
-	link.toTask = def.tasks[linkRep.ToID]
+	link.fromTask = tasks[linkRep.FromID]
+	link.toTask = tasks[linkRep.ToID]
 
 	if link.toTask == nil {
 		strId := strconv.Itoa(link.ID())
@@ -338,8 +347,6 @@ func createLink(def *Definition, linkRep *LinkRep, id int) (*Link, error) {
 
 	// add this link as successor "toLink" to the "fromTask"
 	link.fromTask.toLinks = append(link.fromTask.toLinks, link)
-
-	def.links[link.id] = link
 
 	return link, nil
 }
@@ -580,6 +587,18 @@ func createActivityConfigFromOld(task *Task, rep *TaskRepOld) (*ActivityConfig, 
 				//var err error
 				//todo handle error
 				activityCfg.inputAttrs[name], _ = data.NewAttribute(name, attr.Type(), value)
+			}
+		}
+	} else if len(rep.Attributes) > 0 {
+
+		activityCfg.inputAttrs = make(map[string]*data.Attribute, len(inputAttrs))
+
+		for _, attr := range rep.Attributes {
+
+			if attr != nil {
+				//var err error
+				//todo handle error
+				activityCfg.inputAttrs[attr.Name()] = attr
 			}
 		}
 	}

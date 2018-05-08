@@ -49,7 +49,7 @@ const defJSON = `
     }
     ],
     "links": [
-      { "id": 1, "type": 1,  "name": "", "from": "LogStart", "to": "LogResult"  }
+      { "id": 1, "type": "1",  "name": "", "from": "LogStart", "to": "LogResult"  }
     ]
   }
 `
@@ -162,7 +162,7 @@ type LogActivity struct {
 func NewLogActivity() activity.Activity {
 	metadata := &activity.Metadata{ID: "log"}
 	input := map[string]*data.Attribute{
-		"message": data.NewZeroAttribute("message", data.STRING),
+		"message": data.NewZeroAttribute("message", data.TypeString),
 	}
 	metadata.Input = input
 	return &LogActivity{metadata: metadata}

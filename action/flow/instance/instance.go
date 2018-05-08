@@ -104,31 +104,6 @@ func (inst *Instance) releaseTask(task *definition.Task) {
 	}
 }
 
-func (inst *Instance) appendErrorData(err error) {
-
-	switch e := err.(type) {
-	case *definition.LinkExprError:
-		inst.AddAttr("{Error.type}", data.STRING, "link_expr")
-		inst.AddAttr("{Error.message}", data.STRING, err.Error())
-	case *activity.Error:
-		inst.AddAttr("{Error.message}", data.STRING, err.Error())
-		inst.AddAttr("{Error.data}", data.OBJECT, e.Data())
-		inst.AddAttr("{Error.code}", data.STRING, e.Code())
-
-		if e.ActivityName() != "" {
-			inst.AddAttr("{Error.activity}", data.STRING, e.ActivityName())
-		}
-	case *ActivityEvalError:
-		inst.AddAttr("{Error.activity}", data.STRING, e.TaskName())
-		inst.AddAttr("{Error.message}", data.STRING, err.Error())
-		inst.AddAttr("{Error.type}", data.STRING, e.Type())
-	default:
-		inst.AddAttr("{Error.message}", data.STRING, err.Error())
-	}
-
-	//todo add case for *dataMapperError & *activity.Error
-}
-
 /////////////////////////////////////////
 // Instance - activity.Host Implementation
 
@@ -155,6 +130,10 @@ func (inst *Instance) WorkingData() data.Scope {
 
 func (inst *Instance) GetResolver() data.Resolver {
 	return definition.GetDataResolver()
+}
+
+func (inst *Instance) GetError() ( error) {
+	return inst.returnError
 }
 
 func (inst *Instance) GetReturnData() (map[string]*data.Attribute, error) {
@@ -306,8 +285,8 @@ type SimpleReplyHandler struct {
 // Reply implements ReplyHandler.Reply
 func (rh *SimpleReplyHandler) Reply(code int, replyData interface{}, err error) {
 
-	dataAttr, _ := data.NewAttribute("data", data.OBJECT, replyData)
-	codeAttr, _ := data.NewAttribute("code", data.INTEGER, code)
+	dataAttr, _ := data.NewAttribute("data", data.TypeAny, replyData)
+	codeAttr, _ := data.NewAttribute("code", data.TypeInteger, code)
 	resultData := map[string]*data.Attribute{
 		"data": dataAttr,
 		"code": codeAttr,

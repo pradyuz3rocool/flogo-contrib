@@ -7,15 +7,15 @@ import (
 
 	"github.com/TIBCOSoftware/flogo-contrib/action/flow/instance"
 	"github.com/TIBCOSoftware/flogo-contrib/action/flow/support"
+	"github.com/TIBCOSoftware/flogo-contrib/action/flow/tester"
+	"github.com/TIBCOSoftware/flogo-lib/app/resource"
 	"github.com/TIBCOSoftware/flogo-lib/core/action"
 	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/core/trigger"
 	"github.com/TIBCOSoftware/flogo-lib/engine/runner"
 	"github.com/stretchr/testify/assert"
-	"github.com/TIBCOSoftware/flogo-lib/core/activity"
-	"github.com/TIBCOSoftware/flogo-lib/app/resource"
-	"github.com/TIBCOSoftware/flogo-contrib/action/flow/test"
-	"github.com/TIBCOSoftware/flogo-contrib/action/flow/tester"
+
+	_ "github.com/TIBCOSoftware/flogo-contrib/action/flow/test"
 )
 
 //TestInitNoFlavorError
@@ -38,7 +38,7 @@ func TestInitUnCompressedFlowFlavorError(t *testing.T) {
 	f := &ActionFactory{}
 	f.Init()
 	_, err := f.New(mockConfig)
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
 }
 
 //TestInitCompressedFlowFlavorError
@@ -190,7 +190,7 @@ var testRestartInitialState = `{
     "tasks": [
       {
         "id": "log_2",
-        "inputs": [
+        "input": [
           {
             "name": "message",
             "type": "string",
@@ -243,7 +243,7 @@ func TestFlowAction_Run_Restart(t *testing.T) {
 		attrs := make([]*data.Attribute, len(req.Data))
 
 		for k, v := range req.Data {
-			attr, _ := data.NewAttribute(k, data.ANY, v)
+			attr, _ := data.NewAttribute(k, data.TypeAny, v)
 			attrs = append(attrs, attr)
 		}
 
@@ -253,7 +253,7 @@ func TestFlowAction_Run_Restart(t *testing.T) {
 	execOptions := &instance.ExecOptions{Interceptor: req.Interceptor, Patch: req.Patch}
 	ro := &instance.RunOptions{Op: instance.OpRestart, ReturnID: true, FlowURI: req.InitialState.FlowURI(), InitialState: req.InitialState, ExecOptions: execOptions}
 	inputs := make(map[string]*data.Attribute, 1)
-	attr, _ := data.NewAttribute("_run_options", data.ANY, ro)
+	attr, _ := data.NewAttribute("_run_options", data.TypeAny, ro)
 	inputs[attr.Name()] = attr
 
 	r := runner.NewDirect()
@@ -284,7 +284,7 @@ var jsonFlow1 = `{
           "name": "Number Counter",
           "description": "Simple Global Counter Activity",
           "type": 1,
-          "activityRef": "counter",
+          "activityRef": "test-counter",
           "attributes": [
             {
               "name": "counterName",
@@ -299,7 +299,7 @@ var jsonFlow1 = `{
           "name": "Logger",
           "description": "Simple Log Activity",
           "type": 1,
-          "activityRef": "log",
+          "activityRef": "test-log",
           "attributes": [
             {
               "name": "message",
@@ -368,7 +368,7 @@ var jsonRestartRequest = `{
     "tasks": [
       {
         "id": "log_1",
-        "inputs": [
+        "input": [
           {
             "name": "message",
             "type": "string",
@@ -384,9 +384,6 @@ var jsonRestartRequest = `{
 
 func TestRequestProcessor_RestartFlow(t *testing.T) {
 
-	activity.Register(test.NewLogActivity())
-	activity.Register(test.NewCounterActivity())
-
 	f := action.GetFactory(FLOW_REF)
 	af := f.(*ActionFactory)
 	af.Init()
@@ -394,8 +391,6 @@ func TestRequestProcessor_RestartFlow(t *testing.T) {
 	rConfig1 := &resource.Config{ID: "flow:flow1", Data: []byte(jsonFlow1)}
 	err := resource.Load(rConfig1)
 	assert.Nil(t, err)
-
-
 
 	rp := tester.NewRequestProcessor()
 
@@ -410,5 +405,4 @@ func TestRequestProcessor_RestartFlow(t *testing.T) {
 	assert.NotNil(t, results)
 
 	//results, err := rp.RestartFlow(req)
-
 }

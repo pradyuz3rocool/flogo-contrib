@@ -17,6 +17,7 @@ func NewTaskInst(inst *Instance, task *definition.Task) *TaskInst {
 
 	taskInst.flowInst = inst
 	taskInst.task = task
+	taskInst.taskID = task.ID()
 	return &taskInst
 }
 
@@ -82,7 +83,20 @@ func (ti *TaskInst) OutputScope() data.Scope {
 	if len(ti.task.ActivityConfig().Ref()) > 0 {
 
 		act := activity.Get(ti.task.ActivityConfig().Ref())
-		ti.outScope = NewFixedTaskScope(act.Metadata().Output, ti.task, false)
+
+		outputMetadta := act.Metadata().Output
+
+		if act.Metadata().DynamicIO {
+			//todo validate dynamic on instantiation
+			dynamic, _ := act.(activity.DynamicIO)
+			dynamicIO, _ := dynamic.IOMetadata(ti)
+			//todo handler error
+			if dynamicIO != nil {
+				outputMetadta = dynamicIO.Output
+			}
+		}
+
+		ti.outScope = NewFixedTaskScope(outputMetadta, ti.task, false)
 
 		//logger.Debugf("OutputScope: %#v", ti.outScope)
 	} else if ti.task.IsScope() {
@@ -444,6 +458,33 @@ func (ti *TaskInst) FlowReturn(returnData map[string]*data.Attribute, err error)
 	}
 }
 
+func (taskInst *TaskInst) appendErrorData(err error) {
+
+	switch e := err.(type) {
+	case *definition.LinkExprError:
+		taskInst.flowInst.AddAttr("_E.type", data.TypeString, "link_expr")
+		taskInst.flowInst.AddAttr("_E.message", data.TypeString, err.Error())
+	case *activity.Error:
+		taskInst.flowInst.AddAttr("_E.message", data.TypeString, err.Error())
+		taskInst.flowInst.AddAttr("_E.data", data.TypeObject, e.Data())
+		taskInst.flowInst.AddAttr("_E.code", data.TypeString, e.Code())
+
+		if e.ActivityName() != "" {
+			taskInst.flowInst.AddAttr("_E.activity", data.TypeString, e.ActivityName())
+		} else {
+			taskInst.flowInst.AddAttr("_E.activity", data.TypeString, taskInst.taskID)
+		}
+	case *ActivityEvalError:
+		taskInst.flowInst.AddAttr("_E.activity", data.TypeString, e.TaskName())
+		taskInst.flowInst.AddAttr("_E.message", data.TypeString, err.Error())
+		taskInst.flowInst.AddAttr("_E.type", data.TypeString, e.Type())
+	default:
+		taskInst.flowInst.AddAttr("_E.activity", data.TypeString, taskInst.taskID)
+		taskInst.flowInst.AddAttr("_E.message", data.TypeString, err.Error())
+	}
+
+	//todo add case for *dataMapperError & *activity.Error
+}
 //// Failed marks the Activity as failed
 //func (td *TaskInst) Failed(err error) {
 //

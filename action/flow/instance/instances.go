@@ -41,13 +41,7 @@ func NewIndependentInstance(instanceID string, flowURI string, flow *definition.
 	inst.workItemQueue = util.NewSyncQueue()
 	inst.flowDef = flow
 	inst.flowURI = flowURI
-
-	if flow.ModelID() == "" {
-		inst.flowModel = model.Default()
-	} else {
-		inst.flowModel = model.Get(flow.ModelID())
-		//todo if model not found, should throw error
-	}
+	inst.flowModel = getFlowModel(flow)
 
 	inst.status = model.FlowStatusNotStarted
 	inst.ChangeTracker = NewInstanceChangeTracker()
@@ -216,7 +210,7 @@ func (inst *IndependentInstance) execTask(behavior model.TaskBehavior, taskInst 
 
 			if !taskInst.flowInst.isHandlingError {
 
-				taskInst.flowInst.appendErrorData(NewActivityEvalError(taskInst.task.Name(), "unhandled", err.Error()))
+				taskInst.appendErrorData(NewActivityEvalError(taskInst.task.Name(), "unhandled", err.Error()))
 				inst.HandleGlobalError(taskInst.flowInst, err)
 			}
 			// else what should we do?
@@ -274,7 +268,7 @@ func (inst *IndependentInstance) handleTaskDone(taskBehavior model.TaskBehavior,
 	containerInst := taskInst.flowInst
 
 	if err != nil {
-		containerInst.appendErrorData(err)
+		taskInst.appendErrorData(err)
 		inst.HandleGlobalError(containerInst, err)
 		return
 	}
@@ -303,7 +297,7 @@ func (inst *IndependentInstance) handleTaskDone(taskBehavior model.TaskBehavior,
 			if ok {
 				//if the flow failed, set the error
 				for _, value := range containerInst.returnData {
-					host.AddWorkingData(value)
+					host.SetOutput(value.Name(), value)
 				}
 
 				inst.scheduleEval(host)
@@ -349,7 +343,7 @@ func (inst *IndependentInstance) handleTaskError(taskBehavior model.TaskBehavior
 			//fail
 			inst.SetStatus(model.FlowStatusFailed)
 		} else {
-			containerInst.appendErrorData(err)
+			taskInst.appendErrorData(err)
 			inst.HandleGlobalError(containerInst, err)
 		}
 		return
@@ -404,6 +398,8 @@ func (inst *IndependentInstance) HandleGlobalError(containerInst *Instance, err 
 
 				//inst.scheduleEval(host)
 			}
+		}  else {
+			 inst.returnError = err
 		}
 	}
 }
@@ -503,13 +499,33 @@ func (e *ActivityEvalError) Error() string {
 //////////////
 // todo fix the following
 
+func getFlowModel(flow *definition.Definition) *model.FlowModel{
+	if flow.ModelID() == "" {
+		return model.Default()
+	} else {
+		return model.Get(flow.ModelID())
+		//todo if model not found, should throw error
+	}
+}
+
 //// Restart indicates that this FlowInstance was restarted
-func (inst *IndependentInstance) Restart(id string, manager *support.FlowManager) {
+func (inst *IndependentInstance) Restart(id string, manager *support.FlowManager)  error {
 	inst.id = id
-	inst.flowDef, _ = manager.GetFlow(inst.flowURI)
-	inst.flowModel = model.Get(inst.flowDef.ModelID())
+	var err error
+	inst.flowDef, err = manager.GetFlow(inst.flowURI)
+
+	if err!= nil {
+		return err
+	}
+	if inst.flowDef == nil {
+		return errors.New("unable to resolve flow: " + inst.flowURI)
+	}
+
+	inst.flowModel = getFlowModel(inst.flowDef)
 	inst.master = inst
 	inst.init(inst.Instance)
+
+	return nil
 }
 
 func (inst *IndependentInstance) init(flowInst *Instance) {

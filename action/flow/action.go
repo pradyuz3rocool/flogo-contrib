@@ -70,6 +70,11 @@ type ActionFactory struct {
 }
 
 func (ff *ActionFactory) Init() error {
+
+	if manager != nil {
+		return nil
+	}
+
 	if ep == nil {
 		testerEnabled := os.Getenv(tester.ENV_ENABLED)
 		if strings.ToLower(testerEnabled) == "true" {
@@ -82,10 +87,10 @@ func (ff *ActionFactory) Init() error {
 			ep = NewDefaultExtensionProvider()
 			record = recordFlows()
 		}
-
-		definition.SetMapperFactory(ep.GetMapperFactory())
-		definition.SetLinkExprManagerFactory(ep.GetLinkExprManagerFactory())
 	}
+
+	definition.SetMapperFactory(ep.GetMapperFactory())
+	definition.SetLinkExprManagerFactory(ep.GetLinkExprManagerFactory())
 
 	if idGenerator == nil {
 		idGenerator, _ = util.NewGenerator()
@@ -144,6 +149,10 @@ func (ff *ActionFactory) New(config *action.Config) (action.Action, error) {
 		def, err := manager.GetFlow(flowAction.flowURI)
 		if err != nil {
 			return nil, err
+		} else {
+			if def == nil {
+				return nil, errors.New("unable to resolve flow: " + flowAction.flowURI)
+			}
 		}
 
 		flowAction.ioMetadata = def.Metadata()
@@ -249,15 +258,18 @@ func (fa *FlowAction) Run(context context.Context, inputs map[string]*data.Attri
 		if initialState != nil {
 			inst = initialState
 			instanceID := idGenerator.NextAsString()
-			flowDef, err := manager.GetFlow(flowURI)
+			//flowDef, err := manager.GetFlow(flowURI)
+			//if err != nil {
+			//	return err
+			//}
+
+			//if flowDef.Metadata == nil {
+			//	//flowDef.SetMetadata(fa.config.Metadata)
+			//}
+			err := inst.Restart(instanceID, manager)
 			if err != nil {
 				return err
 			}
-
-			if flowDef.Metadata == nil {
-				//flowDef.SetMetadata(fa.config.Metadata)
-			}
-			inst.Restart(instanceID, manager)
 
 			logger.Debug("Restarting Flow Instance: ", instanceID)
 		} else {
@@ -293,7 +305,7 @@ func (fa *FlowAction) Run(context context.Context, inputs map[string]*data.Attri
 
 		if !inst.FlowDefinition().ExplicitReply() || retID {
 
-			idAttr, _ := data.NewAttribute("id", data.STRING, inst.ID())
+			idAttr, _ := data.NewAttribute("id", data.TypeString, inst.ID())
 			results := map[string]*data.Attribute{
 				"id": idAttr,
 			}
@@ -323,6 +335,8 @@ func (fa *FlowAction) Run(context context.Context, inputs map[string]*data.Attri
 		if inst.Status() == model.FlowStatusCompleted {
 			returnData, err := inst.GetReturnData()
 			handler.HandleResult(returnData, err)
+		} else if inst.Status() == model.FlowStatusFailed {
+			handler.HandleResult(nil, inst.GetError())
 		}
 
 		logger.Debugf("Done Executing flow instance [%s] - Status: %d", inst.ID(), inst.Status())
